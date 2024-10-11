@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 volumes:
   kong_data: {}
@@ -6,6 +6,7 @@ volumes:
 networks:
   kong-net:
     external: false
+    driver: bridge
 
 services:
   kong-migrations:
@@ -74,7 +75,7 @@ services:
     ports:
       - "8000:8000/tcp"
       - "8001:8001/tcp"
-      - "8443:8443/tcp"
+      - "127.0.0.1:8443:8443/tcp"
       - "127.0.0.1:8444:8444/tcp"
     healthcheck:
       test: ["CMD", "kong", "health"]
@@ -85,7 +86,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    
+
   db:
     image: postgres:9.5
     environment:
@@ -109,8 +110,8 @@ services:
       - kong-net
     volumes:
       - kong_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
- 
   konga-prepare:
     container_name: "konga_prepare"
     image: pantsel/konga
@@ -121,12 +122,11 @@ services:
     depends_on:
       - db
 
-  
   konga:
     image: pantsel/konga
     restart: always
     networks:
-        - kong-net
+      - kong-net
     environment:
       DB_ADAPTER: postgres
       TOKEN_SECRET: km1GUr4RkcQD7DewhJPNXrCuZwcKmqjb
@@ -136,7 +136,6 @@ services:
       - db
     ports:
       - "1337:1337"
-  
 
 secrets:
   kong_postgres_password:
